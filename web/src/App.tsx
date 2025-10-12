@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Vortex } from '@/components/ui/vortex';
-import { Sparkles } from 'lucide-react';
+import { Code2, Github, Sparkles } from 'lucide-react';
 import { PlaceholdersAndVanishInput } from '@/components/ui/placeholders-and-vanish-input';
 
 function App() {
@@ -11,14 +11,14 @@ function App() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     console.log('Generating code for:', prompt);
-    // Navigate to editor and include prompt in URL for refresh persistence
+    const projectId = crypto.randomUUID();
     const q = prompt.trim();
-    const url = q ? `/editor?q=${encodeURIComponent(q)}` : '/editor';
+    const url = q ? `/projects/${projectId}?q=${encodeURIComponent(q)}` : `/projects/${projectId}`;
     navigate(url, { state: { prompt: q } });
   };
 
   return (
-  <div className="w-full min-h-screen overflow-hidden bg-black text-white">
+    <div className="w-full min-h-screen overflow-hidden bg-black text-white">
       <Vortex
         backgroundColor="black"
         className="flex items-center flex-col justify-center px-4 md:px-8 lg:px-10 py-6 w-full h-full"
@@ -31,7 +31,7 @@ function App() {
         alphaMultiplier={0.25}
       >
         {/* Header */}
-        {/* <header className="absolute top-0 left-0 right-0 z-30">
+        <header className="absolute top-0 left-0 right-0 z-30">
           <div className="mx-auto max-w-7xl px-6 py-5 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div className="relative">
@@ -56,7 +56,7 @@ function App() {
               </button>
             </nav>
           </div>
-        </header> */}
+        </header>
 
         {/* Hero Section */}
         <section className="relative z-20 w-full">

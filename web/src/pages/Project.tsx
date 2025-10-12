@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useParams } from 'react-router-dom';
 import { LeftPanelHeader } from '@/components/editor/LeftPanelHeader';
 import { ChatInput } from '@/components/editor/ChatInput';
 import { ChatMessage, type ChatMessageData } from '@/components/editor/ChatMessage';
@@ -8,7 +8,8 @@ import { FileTree, type FileNode } from '@/components/editor/FileTree';
 import { CodeEditor } from '@/components/editor/CodeEditor';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 
-export default function EditorPage() {
+export default function ProjectPage() {
+  const { projectId } = useParams<{ projectId: string }>();
   const location = useLocation();
   const initialPrompt = useMemo(() => {
     try {
@@ -142,7 +143,7 @@ export default function EditorPage() {
     <div className="min-h-screen w-full bg-black text-zinc-100">
       <header className="border-b border-zinc-800 px-4 md:px-6 py-4 flex items-center justify-between">
         <Link to="/" className="text-zinc-300 hover:text-white transition-colors">← Back</Link>
-        <div className="text-sm text-zinc-400">Editor</div>
+        <div className="text-sm text-zinc-400">Project: {projectId?.slice(0, 8)}</div>
       </header>
 
       <main className="h-[calc(100vh-65px)]">
