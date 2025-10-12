@@ -6,8 +6,7 @@ import { ChatMessage, type ChatMessageData } from '@/components/editor/ChatMessa
 import { RightHeader } from '@/components/editor/RightHeader';
 import { FileTree, type FileNode } from '@/components/editor/FileTree';
 import { CodeEditor } from '@/components/editor/CodeEditor';
-
-// message type is provided by ChatMessageData; no local Message needed
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 
 export default function EditorPage() {
   const location = useLocation();
@@ -94,40 +93,6 @@ export default function EditorPage() {
     setFileMap((prev) => ({ ...prev, [selectedPath]: v }));
   };
 
-  // --- Resizable logic ---
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const draggingRef = useRef(false);
-  const [leftPct, setLeftPct] = useState(38); // initial left width %
-
-  const onMouseMove = useCallback((e: MouseEvent) => {
-    if (!draggingRef.current || !containerRef.current) return;
-    const rect = containerRef.current.getBoundingClientRect();
-    const relativeX = e.clientX - rect.left;
-    const pct = (relativeX / rect.width) * 100;
-    const clamped = Math.min(78, Math.max(22, pct));
-    setLeftPct(clamped);
-  }, []);
-
-  const stopDragging = useCallback(() => {
-    draggingRef.current = false;
-    window.removeEventListener('mousemove', onMouseMove);
-    window.removeEventListener('mouseup', stopDragging);
-  }, [onMouseMove]);
-
-  const startDragging = useCallback(() => {
-    draggingRef.current = true;
-    window.addEventListener('mousemove', onMouseMove);
-    window.addEventListener('mouseup', stopDragging);
-  }, [onMouseMove, stopDragging]);
-
-  useEffect(() => {
-    return () => {
-      // cleanup just in case
-      window.removeEventListener('mousemove', onMouseMove);
-      window.removeEventListener('mouseup', stopDragging);
-    };
-  }, [onMouseMove, stopDragging]);
-
   // --- Chat send ---
   const feedRef = useRef<HTMLDivElement | null>(null);
 
@@ -180,47 +145,38 @@ export default function EditorPage() {
         <div className="text-sm text-zinc-400">Editor</div>
       </header>
 
-      <main ref={containerRef} className="h-[calc(100vh-65px)] relative select-none">
-        <div className="absolute inset-0 flex">
-          {/* Left: Chat */}
-          <section
-            className="h-full border-r border-zinc-800 bg-zinc-950/60 backdrop-blur-sm flex flex-col"
-            style={{ width: `${leftPct}%` }}
-          >
-            <LeftPanelHeader projectName="React component integration" onViewProjectHref="#" />
-            <div ref={feedRef} className="flex-1 overflow-y-auto p-4 space-y-3">
-              {messages.length === 0 ? (
-                <p className="text-sm text-zinc-500">Type a prompt to get started.</p>
-              ) : (
-                messages.map((m) => <ChatMessage key={m.id} msg={m as ChatMessageData} />)
-              )}
-            </div>
-            <div className="px-3 pb-2 border-t border-zinc-800">
-              <ChatInput value={input} onChange={setInput} onSubmit={sendMessage} placeholder="Ask a follow-up…" />
-            </div>
-            <div className="mt-auto">
-              <div className="sticky bottom-0">
-                <div className="px-3 py-2 border-t border-zinc-800 bg-zinc-950/70 backdrop-blur-sm flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <button className="px-2.5 py-1.5 text-xs rounded-md bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300">Design</button>
+      <main className="h-[calc(100vh-65px)]">
+        <ResizablePanelGroup direction="horizontal">
+          <ResizablePanel defaultSize={38} minSize={22} maxSize={78}>
+            <section className="h-full border-r border-zinc-800 bg-zinc-950/60 backdrop-blur-sm flex flex-col">
+              <LeftPanelHeader projectName="React component integration" onViewProjectHref="#" />
+              <div ref={feedRef} className="flex-1 overflow-y-auto p-4 space-y-3">
+                {messages.length === 0 ? (
+                  <p className="text-sm text-zinc-500">Type a prompt to get started.</p>
+                ) : (
+                  messages.map((m) => <ChatMessage key={m.id} msg={m as ChatMessageData} />)
+                )}
+              </div>
+              <div className="px-3 pb-2 border-t border-zinc-800">
+                <ChatInput value={input} onChange={setInput} onSubmit={sendMessage} placeholder="Ask a follow-up…" />
+              </div>
+              <div className="mt-auto">
+                <div className="sticky bottom-0">
+                  <div className="px-3 py-2 border-t border-zinc-800 bg-zinc-950/70 backdrop-blur-sm flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <button className="px-2.5 py-1.5 text-xs rounded-md bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300">Design</button>
+                    </div>
+                    <button className="px-2.5 py-1.5 text-xs rounded-md bg-blue-600 hover:bg-blue-700 text-white">Upgrade Plan</button>
                   </div>
-                  <button className="px-2.5 py-1.5 text-xs rounded-md bg-blue-600 hover:bg-blue-700 text-white">Upgrade Plan</button>
                 </div>
               </div>
-            </div>
-          </section>
+            </section>
+          </ResizablePanel>
 
-          {/* Divider */}
-          <div
-            role="separator"
-            aria-orientation="vertical"
-            onMouseDown={startDragging}
-            className="w-1.5 cursor-col-resize bg-transparent hover:bg-zinc-700/50 active:bg-zinc-700/70"
-            title="Drag to resize"
-          />
+          <ResizableHandle withHandle className="hover:bg-zinc-700/50 active:bg-zinc-700/70" />
 
-          {/* Right: Code/Preview */}
-          <section className="h-full flex-1 flex flex-col bg-zinc-950/40">
+          <ResizablePanel defaultSize={62}>
+            <section className="h-full flex flex-col bg-zinc-950/40">
             <RightHeader
               pathSegments={selectedPath.split('/')}
               view={rightTab}
@@ -262,7 +218,8 @@ export default function EditorPage() {
               )}
             </div>
           </section>
-        </div>
+          </ResizablePanel>
+        </ResizablePanelGroup>
       </main>
     </div>
   );
