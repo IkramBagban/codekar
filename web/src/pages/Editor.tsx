@@ -1,7 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { LeftPanelHeader } from '@/components/editor/LeftPanelHeader';
+import { ChatInput } from '@/components/editor/ChatInput';
+import { ChatMessage, type ChatMessageData } from '@/components/editor/ChatMessage';
 
-type Message = { id: string; role: 'user' | 'assistant' | 'system'; content: string };
+// message type is provided by ChatMessageData; no local Message needed
 
 export default function EditorPage() {
   const location = useLocation();
@@ -11,13 +14,15 @@ export default function EditorPage() {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const s = (location.state as any)?.prompt;
       if (typeof s === 'string' && s.length) return s;
-    } catch {}
+    } catch {
+      /* ignore */
+    }
     // fallback to query param
     const qp = new URLSearchParams(location.search).get('q');
     return typeof qp === 'string' ? qp : '';
   }, [location.state, location.search]);
 
-  const [messages, setMessages] = useState<Message[]>(() =>
+  const [messages, setMessages] = useState<ChatMessageData[]>(() =>
     initialPrompt
       ? [{ id: crypto.randomUUID(), role: 'user', content: initialPrompt }]
       : []
@@ -63,6 +68,18 @@ export default function EditorPage() {
   }, [onMouseMove, stopDragging]);
 
   // --- Chat send ---
+  const feedRef = useRef<HTMLDivElement | null>(null);
+
+  const scrollToBottom = () => {
+    const el = feedRef.current;
+    if (!el) return;
+    el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages.length]);
+
   const sendMessage = useCallback(() => {
     const text = input.trim();
     if (!text) return;
@@ -72,23 +89,25 @@ export default function EditorPage() {
     ]);
     setInput('');
 
-    // Placeholder: Simulate assistant echo and code update
+    // Simulate assistant thought and action updates
+    const thoughtId = crypto.randomUUID();
     setTimeout(() => {
-      const reply = `You said: "${text}"`;
       setMessages((prev) => [
         ...prev,
-        { id: crypto.randomUUID(), role: 'assistant', content: reply },
+        { id: thoughtId, role: 'assistant-thought', content: 'Thought for 3s' } as ChatMessageData,
       ]);
-      setCode((c) => `${c}\n// TODO: Implement for: ${text}`);
-    }, 400);
+    }, 300);
+
+    setTimeout(() => {
+      // replace thought with action card and update code
+      setMessages((prev) =>
+        prev.map(m => (m.id === thoughtId ? { ...m, role: 'assistant-action', title: 'Added vanish input demo v1', content: 'The vanish-on-submit input is now available at /vanish-input. Structure is clean with primitives in components/ui and a demo wrapper. Uses motion/react and our cn utility.' } as ChatMessageData : m))
+      );
+      setCode((c) => `${c}\n// Generated for: ${text}`);
+    }, 1600);
   }, [input]);
 
-  const onKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if ((e.key === 'Enter' && !e.shiftKey)) {
-      e.preventDefault();
-      sendMessage();
-    }
-  };
+  // Handled inside ChatInput
 
   return (
     <div className="min-h-screen w-full bg-black text-zinc-100">
@@ -101,47 +120,28 @@ export default function EditorPage() {
         <div className="absolute inset-0 flex">
           {/* Left: Chat */}
           <section
-            className="h-full border-r border-zinc-800 bg-zinc-950/60 backdrop-blur-sm"
+            className="h-full border-r border-zinc-800 bg-zinc-950/60 backdrop-blur-sm flex flex-col"
             style={{ width: `${leftPct}%` }}
           >
-            <div className="h-full flex flex-col">
-              <div className="px-4 py-3 border-b border-zinc-800 text-sm text-zinc-300">Chat</div>
-              <div className="flex-1 overflow-y-auto p-4 space-y-3">
-                {messages.length === 0 ? (
-                  <p className="text-sm text-zinc-500">Type a prompt to get started.</p>
-                ) : (
-                  messages.map((m) => (
-                    <div
-                      key={m.id}
-                      className={
-                        m.role === 'user'
-                          ? 'ml-auto max-w-[85%] rounded-lg bg-zinc-900 border border-zinc-800 px-3 py-2 text-zinc-200'
-                          : 'mr-auto max-w-[85%] rounded-lg bg-zinc-900/60 border border-zinc-800/80 px-3 py-2 text-zinc-300'
-                      }
-                    >
-                      {m.content}
-                    </div>
-                  ))
-                )}
-              </div>
-              <div className="p-3 border-t border-zinc-800">
-                <div className="flex items-end gap-2">
-                  <textarea
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    onKeyDown={onKeyDown}
-                    placeholder="Ask CodeKar…"
-                    className="flex-1 min-h-[44px] max-h-40 bg-black/60 border border-zinc-800 rounded-md px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-500 outline-none focus:ring-2 focus:ring-zinc-700 focus:border-zinc-700 resize-y"
-                  />
-                  <button
-                    onClick={sendMessage}
-                    className="h-[44px] px-3 rounded-md bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-200 disabled:opacity-50"
-                    disabled={!input.trim()}
-                  >
-                    Send
-                  </button>
+            <LeftPanelHeader projectName="React component integration" onViewProjectHref="#" />
+            <div ref={feedRef} className="flex-1 overflow-y-auto p-4 space-y-3">
+              {messages.length === 0 ? (
+                <p className="text-sm text-zinc-500">Type a prompt to get started.</p>
+              ) : (
+                messages.map((m) => <ChatMessage key={m.id} msg={m as ChatMessageData} />)
+              )}
+            </div>
+            <div className="px-3 pb-2 border-t border-zinc-800">
+              <ChatInput value={input} onChange={setInput} onSubmit={sendMessage} placeholder="Ask a follow-up…" />
+            </div>
+            <div className="mt-auto">
+              <div className="sticky bottom-0">
+                <div className="px-3 py-2 border-t border-zinc-800 bg-zinc-950/70 backdrop-blur-sm flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <button className="px-2.5 py-1.5 text-xs rounded-md bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300">Design</button>
+                  </div>
+                  <button className="px-2.5 py-1.5 text-xs rounded-md bg-blue-600 hover:bg-blue-700 text-white">Upgrade Plan</button>
                 </div>
-                <p className="mt-2 text-[11px] text-zinc-500">Press Enter to send • Shift+Enter for new line</p>
               </div>
             </div>
           </section>
