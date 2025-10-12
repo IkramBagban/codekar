@@ -3,6 +3,9 @@ import { Link, useLocation } from 'react-router-dom';
 import { LeftPanelHeader } from '@/components/editor/LeftPanelHeader';
 import { ChatInput } from '@/components/editor/ChatInput';
 import { ChatMessage, type ChatMessageData } from '@/components/editor/ChatMessage';
+import { RightHeader } from '@/components/editor/RightHeader';
+import { FileTree, type FileNode } from '@/components/editor/FileTree';
+import { CodeEditor } from '@/components/editor/CodeEditor';
 
 // message type is provided by ChatMessageData; no local Message needed
 
@@ -28,10 +31,68 @@ export default function EditorPage() {
       : []
   );
   const [input, setInput] = useState('');
-  const [rightTab, setRightTab] = useState<'preview' | 'code'>('preview');
-  const [code, setCode] = useState<string>(
-    "// Generated code will appear here...\nfunction hello() {\n  console.log('Hello, CodeKar!');\n}"
-  );
+  const [rightTab, setRightTab] = useState<'preview' | 'code' | 'settings'>('preview');
+
+  // --- Simple file tree model (in-memory) ---
+  const filesRoot = useMemo<FileNode>(() => ({
+    name: '/',
+    path: '/',
+    type: 'folder',
+    children: [
+      {
+        name: 'app',
+        path: 'app',
+        type: 'folder',
+        children: [
+          {
+            name: 'vanish-input',
+            path: 'app/vanish-input',
+            type: 'folder',
+            children: [
+              { name: 'page.tsx', path: 'app/vanish-input/page.tsx', type: 'file' },
+            ],
+          },
+        ],
+      },
+      {
+        name: 'components',
+        path: 'components',
+        type: 'folder',
+        children: [
+          {
+            name: 'ui',
+            path: 'components/ui',
+            type: 'folder',
+            children: [
+              { name: 'placeholders-and-vanish-input.tsx', path: 'components/ui/placeholders-and-vanish-input.tsx', type: 'file' },
+            ],
+          },
+        ],
+      },
+    ],
+  }), []);
+
+  // map path -> content (demo)
+  const [fileMap, setFileMap] = useState<Record<string, string>>({
+    'app/vanish-input/page.tsx': "export default function Page(){return <main className='min-h-[100dvh] flex items-center justify-center p-6'><div className='w-full max-w-3xl'>Vanish Input Page</div></main>}\n",
+    'components/ui/placeholders-and-vanish-input.tsx': '// vanish input implementation here...\n',
+  });
+
+  const [selectedPath, setSelectedPath] = useState<string>(() => new URLSearchParams(location.search).get('file') || 'app/vanish-input/page.tsx');
+
+  // keep URL in sync when selection changes
+  useEffect(() => {
+    const sp = new URLSearchParams(location.search);
+    sp.set('file', selectedPath);
+    const qp = sp.toString();
+    const url = `${location.pathname}?${qp}`;
+    window.history.replaceState({ ...window.history.state }, '', url);
+  }, [selectedPath, location.pathname, location.search]);
+
+  const currentCode = fileMap[selectedPath] ?? '';
+  const setCurrentCode = (v: string) => {
+    setFileMap((prev) => ({ ...prev, [selectedPath]: v }));
+  };
 
   // --- Resizable logic ---
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -103,9 +164,12 @@ export default function EditorPage() {
       setMessages((prev) =>
         prev.map(m => (m.id === thoughtId ? { ...m, role: 'assistant-action', title: 'Added vanish input demo v1', content: 'The vanish-on-submit input is now available at /vanish-input. Structure is clean with primitives in components/ui and a demo wrapper. Uses motion/react and our cn utility.' } as ChatMessageData : m))
       );
-      setCode((c) => `${c}\n// Generated for: ${text}`);
+      setFileMap((prev) => ({
+        ...prev,
+        [selectedPath]: (prev[selectedPath] ?? '') + `\n// Generated for: ${text}`,
+      }));
     }, 1600);
-  }, [input]);
+  }, [input, selectedPath]);
 
   // Handled inside ChatInput
 
@@ -156,54 +220,46 @@ export default function EditorPage() {
           />
 
           {/* Right: Code/Preview */}
-          <section className="h-full flex-1 bg-zinc-950/40">
-            <div className="h-full grid grid-rows-[auto,1fr]">
-              <div className="px-4 py-3 border-b border-zinc-800 flex items-center gap-2">
-                <button
-                  onClick={() => setRightTab('preview')}
-                  className={
-                    rightTab === 'preview'
-                      ? 'px-3 py-1.5 rounded-md bg-zinc-900 border border-zinc-800 text-zinc-200'
-                      : 'px-3 py-1.5 rounded-md bg-transparent border border-transparent text-zinc-400 hover:text-zinc-200 hover:border-zinc-800'
-                  }
-                >
-                  Preview
-                </button>
-                <button
-                  onClick={() => setRightTab('code')}
-                  className={
-                    rightTab === 'code'
-                      ? 'px-3 py-1.5 rounded-md bg-zinc-900 border border-zinc-800 text-zinc-200'
-                      : 'px-3 py-1.5 rounded-md bg-transparent border border-transparent text-zinc-400 hover:text-zinc-200 hover:border-zinc-800'
-                  }
-                >
-                  Code
-                </button>
-              </div>
-              <div className="p-4 overflow-auto">
-                {rightTab === 'preview' ? (
-                  <div className="w-full min-h-[60vh] h-full bg-zinc-950 border border-zinc-800 rounded-lg p-4 text-zinc-400">
-                    <p className="mb-2">Live preview will render here.</p>
-                    {messages.length > 0 && (
-                      <>
-                        <p className="text-zinc-500 text-sm mb-2">Latest prompt:</p>
-                        <div className="rounded-md border border-zinc-800 bg-black/50 p-3 text-zinc-300">
-                          {messages[messages.length - 1].content}
-                        </div>
-                      </>
-                    )}
+          <section className="h-full flex-1 flex flex-col bg-zinc-950/40">
+            <RightHeader
+              pathSegments={selectedPath.split('/')}
+              view={rightTab}
+              onChangeView={(v) => setRightTab(v)}
+              onBack={() => window.history.back()}
+              onForward={() => window.history.forward()}
+              onShare={() => { /* TODO */ }}
+              onPublish={() => { /* TODO */ }}
+            />
+            <div className="flex-1 min-h-0">
+              {rightTab === 'preview' ? (
+                <iframe
+                  src="https://preview--vanish-input-wizard.lovable.app/"
+                  title="Live Preview"
+                  className="w-full h-full border-0 bg-white"
+                  sandbox="allow-forms allow-modals allow-popups allow-presentation allow-same-origin allow-scripts"
+                />
+              ) : rightTab === 'settings' ? (
+                <div className="w-full h-full bg-zinc-950 text-zinc-400 p-4">
+                  <p className="text-sm">Settings panel (coming soon)…</p>
+                </div>
+              ) : (
+                <div className="h-full flex">
+                  {/* File explorer (fixed width) */}
+                  <div className="h-full w-[250px] md:w-[260px] lg:w-[280px] shrink-0 border-r border-zinc-800 overflow-y-auto bg-zinc-950/50">
+                    <div className="px-3 py-2 text-xs text-zinc-500 border-b border-zinc-800">Files</div>
+                    <FileTree root={filesRoot} selectedPath={selectedPath} onSelect={setSelectedPath} className="p-2" />
                   </div>
-                ) : (
-                  <div className="w-full min-h-[60vh] h-full bg-zinc-950 border border-zinc-800 rounded-lg">
-                    <textarea
-                      value={code}
-                      onChange={(e) => setCode(e.target.value)}
-                      className="w-full h-full bg-transparent text-zinc-100 p-4 font-mono text-sm outline-none resize-none"
-                      spellCheck={false}
+
+                  {/* Main content (editor) */}
+                  <div className="flex-1 min-w-0 h-full bg-zinc-950">
+                    <CodeEditor
+                      value={currentCode}
+                      onChange={setCurrentCode}
+                      language={selectedPath.endsWith('.tsx') ? 'typescript' : 'javascript'}
                     />
                   </div>
-                )}
-              </div>
+                </div>
+              )}
             </div>
           </section>
         </div>
