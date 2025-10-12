@@ -100,12 +100,6 @@ function App() {
               </div>
             </div>
 
-            {/* Feature Pills */}
-            <div className="mt-6 flex flex-wrap items-center justify-center gap-3 text-sm">
-              <div className="px-4 py-2 rounded-full bg-zinc-900/70 backdrop-blur-sm border border-zinc-800 text-zinc-300">⚡ Instant Preview</div>
-              <div className="px-4 py-2 rounded-full bg-zinc-900/70 backdrop-blur-sm border border-zinc-800 text-zinc-300">📝 Edit Code Live</div>
-              <div className="px-4 py-2 rounded-full bg-zinc-900/70 backdrop-blur-sm border border-zinc-800 text-zinc-300">🚀 One‑click Deploys</div>
-            </div>
           </div>
         </section>
       </Vortex>
