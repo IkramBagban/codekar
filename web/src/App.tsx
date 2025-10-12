@@ -1,15 +1,20 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Vortex } from '@/components/ui/vortex';
 import { Sparkles } from 'lucide-react';
 import { PlaceholdersAndVanishInput } from '@/components/ui/placeholders-and-vanish-input';
 
 function App() {
   const [prompt, setPrompt] = useState('');
+  const navigate = useNavigate();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     console.log('Generating code for:', prompt);
-    // TODO: Implement code generation
+    // Navigate to editor and include prompt in URL for refresh persistence
+    const q = prompt.trim();
+    const url = q ? `/editor?q=${encodeURIComponent(q)}` : '/editor';
+    navigate(url, { state: { prompt: q } });
   };
 
   return (
