@@ -4,9 +4,13 @@ import './index.css'
 import App from './App.tsx'
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import ProjectPage from '@/pages/Project.tsx'
+import SignInPage from '@/pages/SignIn.tsx'
+import SignUpPage from '@/pages/SignUp.tsx'
 
 const router = createBrowserRouter([
   { path: '/', element: <App /> },
+  { path: '/signin', element: <SignInPage /> },
+  { path: '/signup', element: <SignUpPage /> },
   { path: '/projects/:projectId', element: <ProjectPage /> },
   {
     path: '*', element: (
