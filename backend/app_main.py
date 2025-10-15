@@ -10,7 +10,7 @@ app = FastAPI(
     debug=settings.DEBUG
 )
 
-# Include routers   
+# Include routers
 app.include_router(main_router)
 app.include_router(users_router)
 
