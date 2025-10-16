@@ -3,9 +3,12 @@ import { Link, useNavigate } from 'react-router-dom';
 import { AuthLayout } from '@/components/auth/AuthLayout';
 import { PasswordInput } from '@/components/auth/PasswordInput';
 import { OAuthButtons } from '@/components/auth/OAuthButtons';
+import { api } from '@/lib/api';
+import { useAuth } from '@/lib/use-auth';
 
 export default function SignUpPage() {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -30,10 +33,17 @@ export default function SignUpPage() {
     setIsLoading(true);
 
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const result = await api.register({ name, email, password });
+
+      if (!result.success || !result.data) {
+        setError(result.error || 'Failed to create account');
+        return;
+      }
+
+      login(result.data.user, result.data.token);
       navigate('/');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create account');
+      setError(err instanceof Error ? err.message : 'Failed to create account. Please check your connection.');
     } finally {
       setIsLoading(false);
     }
