@@ -10,5 +10,9 @@ class Settings:
     APP_NAME: str = "CodeKar Backend"
     VERSION: str = "0.1.0"
     DEBUG: bool = os.getenv("DEBUG", "False").lower() == "true"
+    
+    SECRET_KEY: str = os.getenv("SECRET_KEY", "supersecret")
+    ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7  # 7 days
 
 settings = Settings()

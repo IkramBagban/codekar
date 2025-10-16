@@ -10,15 +10,21 @@ class UserService:
     @staticmethod
     def create_user(db: Session, user_data: UserCreate) -> User:
         """Create a new user in the database."""
-        db_user = User(
-            name=user_data.name or user_data.email.split("@")[0],   
-            email=user_data.email,
-            password=user_data.password  
-        )
-        db.add(db_user)
-        db.commit()
-        db.refresh(db_user)
-        return db_user
+        try:
+            print("Creating user with data:", user_data)
+            db_user = User(
+                name=user_data.name or user_data.email.split("@")[0],   
+                email=user_data.email,
+                password=user_data.password  
+            )
+            db.add(db_user)
+            db.commit()
+            db.refresh(db_user)
+            return db_user
+        except Exception as e:
+            print(f"Error in create_user: {str(e)}")
+            db.rollback()
+            raise e
     
     @staticmethod
     def get_user_by_id(db: Session, user_id: int) -> Optional[User]:
