@@ -3,10 +3,13 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Vortex } from '@/components/ui/vortex';
 import { Code2, Github, Sparkles } from 'lucide-react';
 import { PlaceholdersAndVanishInput } from '@/components/ui/placeholders-and-vanish-input';
+import { UserMenu } from '@/components/auth/UserMenu';
+import { useAuth } from '@/lib/use-auth';
 
 function App() {
   const [prompt, setPrompt] = useState('');
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,19 +44,25 @@ function App() {
               </div>
               <span className="text-xl font-semibold tracking-tight text-zinc-100">CodeKar</span>
             </div>
-            <nav className="hidden md:flex items-center gap-6 text-sm">
-              <a href="#features" className="text-zinc-300 hover:text-white transition-colors">Features</a>
-              <a href="#pricing" className="text-zinc-300 hover:text-white transition-colors">Pricing</a>
-              <a href="https://github.com" target="_blank" rel="noopener noreferrer" className="text-zinc-300 hover:text-white transition-colors flex items-center gap-2">
+            <nav className="flex items-center gap-4 md:gap-6 text-sm">
+              <a href="#features" className="hidden md:inline text-zinc-300 hover:text-white transition-colors">Features</a>
+              <a href="#pricing" className="hidden md:inline text-zinc-300 hover:text-white transition-colors">Pricing</a>
+              <a href="https://github.com" target="_blank" rel="noopener noreferrer" className="hidden md:flex text-zinc-300 hover:text-white transition-colors items-center gap-2">
                 <Github className="w-4 h-4" />
                 Star
               </a>
-              <Link to="/signin" className="px-4 py-2 rounded-lg bg-zinc-900/70 hover:bg-zinc-900/90 border border-zinc-800 transition-colors">
-                Sign in
-              </Link>
-              <Link to="/signup" className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition-colors">
-                Get started
-              </Link>
+              {isAuthenticated ? (
+                <UserMenu />
+              ) : (
+                <>
+                  <Link to="/signin" className="px-4 py-2 rounded-lg bg-zinc-900/70 hover:bg-zinc-900/90 border border-zinc-800 transition-colors">
+                    Sign in
+                  </Link>
+                  <Link to="/signup" className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition-colors">
+                    Get started
+                  </Link>
+                </>
+              )}
             </nav>
           </div>
         </header>
