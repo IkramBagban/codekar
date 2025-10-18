@@ -1,15 +1,5 @@
 from pydantic import BaseModel, EmailStr
-from pydantic.generics import GenericModel 
-from typing import Any, Dict, Generic, List, Optional, TypeVar
-
-M = TypeVar("M", bound=BaseModel)
-
-class ApiResponse(GenericModel, Generic[M]):
-    success: bool
-    message: Optional[str] = None
-    data: Optional[M] = None
-    error: Optional[str] = None
-
+from typing import Optional
 
 class UserBase(BaseModel):
     email: EmailStr

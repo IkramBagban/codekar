@@ -2,7 +2,8 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.core.auth_middleware import get_current_user
-from app.schemas.user import UserResponse, ApiResponse
+from app.schemas.common import ApiResponse
+from app.schemas.user import UserResponse
 from app.services.user_service import UserService
 from app.models.user import User
 from typing import List
@@ -19,7 +20,7 @@ async def get_current_user_info(current_user: User = Depends(get_current_user)):
     user_response = UserResponse(
         id=current_user.id,
         email=current_user.email,
-        name=current_user.name
+        name=current_user.name  
     )
     return ApiResponse(
         success=True,

@@ -1,4 +1,5 @@
 from sqlalchemy import Column, Integer, String
+from sqlalchemy.orm import relationship 
 from app.core.database import Base
 
 class User(Base):
@@ -11,5 +12,6 @@ class User(Base):
     email = Column(String, unique=True, index=True, nullable=False)
     password = Column(String, nullable=False)
     
+    projects = relationship("Project",back_populates="users")
     def __repr__(self):
         return f"<User(id={self.id}, email='{self.email}', name='{self.name}')>"
