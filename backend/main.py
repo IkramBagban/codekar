@@ -2,7 +2,12 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.core.database import init_db
-from app.api import main_router, users_router, auth_router  
+from app.api import main_router, users_router, auth_router
+from app.api.generate import router as generation_router
+import os
+
+os.environ["OPENAI_API_KEY"] = settings.OPENAI_API_KEY
+os.environ["GOOGLE_API_KEY"] = settings.GOOGLE_API_KEY
 
 app = FastAPI(
     title=settings.APP_NAME,
@@ -22,6 +27,8 @@ app.add_middleware(
 app.include_router(main_router)
 app.include_router(users_router)
 app.include_router(auth_router)
+app.include_router(generation_router)
+# app.include_router(simple_generate_router)
 
 # Initialize database on startup
 @app.on_event("startup")
