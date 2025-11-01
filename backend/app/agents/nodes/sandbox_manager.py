@@ -9,10 +9,7 @@ def create_sandbox_node(state: AgentState) -> AgentState:
     print("creating sandbox")
     try:
         os.environ["E2B_API_KEY"] = settings.E2B_API_KEY
-        print("E2B_API_KEY", os.environ["E2B_API_KEY"])
         sandbox = Sandbox.create()
-        print("sbox", sandbox)
-        print("sandbox.sandbox_id", sandbox.sandbox_id)
         state["sandbox_id"] = sandbox.sandbox_id
         state["files"] = {}
         state["error"] = None

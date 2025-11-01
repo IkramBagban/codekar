@@ -4,11 +4,16 @@ from app.agents.nodes.code_generator import code_generator_node
 from app.agents.nodes.sandbox_manager import create_sandbox_node, cleanup_sandbox_node
 from langgraph.graph import StateGraph, START, END
 
+# def get_all_files():
+    
 
+# def pull_template_node(state: AgentState) :
+    
 def create_code_generation_graph():    
     agent_builder = StateGraph(AgentState)
     
     agent_builder.add_node("create_sandbox", create_sandbox_node)
+    # agent_builder.add_node("pull_template", pull_template_node) 
     agent_builder.add_node("generate_code", code_generator_node)
     # agent_builder.add_node("cleanup_sandbox", cleanup_sandbox_node)
 
@@ -36,6 +41,7 @@ def generate_code_helper(prompt: str):
         print("response ", response)
         
         if response.get("error"):
+            print("Error occurred: in ", response["error"])
             return {
                 "type": "error",
                 "content": response["error"],
@@ -49,6 +55,7 @@ def generate_code_helper(prompt: str):
             "files": response.get("files")
         }
     except Exception as e:
+        print("Exception occurred: ", str(e))
         return {
             "type": "error",
             "content": f"Generation failed: {str(e)}"
